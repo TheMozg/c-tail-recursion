@@ -1,11 +1,6 @@
 #include "llist.h"
 #include "malloc.h"
 
-struct llist_t {
-  int value;
-  struct llist_t* next;
-};
-
 struct llist_t *list_create(int value)
 {
   struct llist_t *node = malloc(sizeof(struct llist_t));
@@ -79,4 +74,66 @@ void list_free(struct llist_t* origin) {
     free(node);
     node = nextnode;
   } while(nextnode != NULL);
+}
+
+void foreach(const struct llist_t* origin, funp_t fp){
+  const struct llist_t* node = origin;
+  while (node != NULL) {
+    fp(node);
+    node = node->next;
+  }
+}
+
+struct llist_t* map(const struct llist_t* origin, funp_mut_t fp)
+{
+  struct llist_t* list = NULL;
+  struct llist_t* head = NULL;
+  const struct llist_t* node = origin;
+  if (origin == NULL) {
+    return NULL;
+  }
+  list = list_create(origin->value);
+  head = list;
+  fp(head);
+  while (node->next != NULL) {
+    head->next = list_create(node->next->value);
+    fp(head->next);
+    node = node->next;
+    head = head->next;
+  }
+  return list;
+}
+
+void map_mut(struct llist_t* origin, funp_mut_t fp){
+  struct llist_t* node = origin;
+  while (node != NULL) {
+    fp(node);
+    node = node->next;
+  }
+}
+
+int foldl(int acc, funp2_t fp, const struct llist_t* origin){
+  const struct llist_t* node = origin;
+  while (node != NULL) {
+    acc = fp(acc, node);
+    node = node->next;
+  }
+  return acc;
+}
+
+struct llist_t* iterate(const struct llist_t* origin, funp_mut_t fp, size_t n){
+  struct llist_t* list = NULL;
+  struct llist_t* head = NULL;
+  size_t i;
+  if (origin == NULL) {
+    return NULL;
+  }
+  list = list_create(origin->value);
+  head = list;
+  for (i = 0; i < n-1; i++) {
+    head->next = list_create(head->value);
+    fp(head->next);
+    head = head->next;
+  }
+  return list;
 }
